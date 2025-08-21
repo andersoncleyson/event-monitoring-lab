@@ -1,12 +1,16 @@
-FROM golang:1.19-alpine as builder
+FROM golang:1.23-alpine as builder
 
 WORKDIR /app
+COPY go.mod go.sum ./
+
+RUN go mod download
+
 COPY . .
 
-RUN go mod init exporter && go mod tidy
 RUN go build -o /exporter-bin .
 
 FROM alpine:latest
+
 COPY --from=builder /exporter-bin /exporter-bin
 
 EXPOSE 8081
