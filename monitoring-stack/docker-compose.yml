@@ -4,6 +4,8 @@ services:
   transaction-exporter:
     build: ./transaction-exporter
     container_name: transaction-exporter
+    ports:
+      - "8081:8081"
     volumes:
       - ./data:/data
     restart: always
