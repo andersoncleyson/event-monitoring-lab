@@ -14,23 +14,21 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// We define Prometheus's "gauges".
-// A Gauge is a numeric value that can go up and down.
 var (
 	transactionsApproved = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "transactions_approved_total",
+		Name: "transactions_approved_count",
 		Help: "Number of transactions approved in the last minute.",
 	})
 	transactionsDenied = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "transactions_denied_total",
+		Name: "transactions_denied_count",
 		Help: "Number of transactions declined in the last minute.",
 	})
 	transactionsFailed = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "transactions_failed_total",
+		Name: "transactions_failed_count",
 		Help: "Number of failed transactions in the last minute.",
 	})
 	transactionsReversed = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "transactions_reversed_total",
+		Name: "transactions_reversed_count",
 		Help: "Number of transactions reversed in the last",
 	})
 )
@@ -46,6 +44,7 @@ var (
 )
 
 func init() {
+
 	prometheus.MustRegister(transactionsApproved)
 	prometheus.MustRegister(transactionsDenied)
 	prometheus.MustRegister(transactionsFailed)
@@ -64,7 +63,6 @@ func processTransactionsCSV(filePath string) {
 			time.Sleep(10 * time.Second)
 			continue
 		}
-		defer file.Close()
 
 		reader := csv.NewReader(file)
 		reader.Read()
@@ -83,36 +81,30 @@ func processTransactionsCSV(filePath string) {
 			status := strings.ToLower(record[1])
 			count, _ := strconv.ParseFloat(record[2], 64)
 
+			log.Printf("[DEBUG] Line readed: status='%s', count=%.2f", status, count)
+
 			switch status {
 			case "approved":
+				log.Printf("[DEBUG] Setando 'transactions_approved_count' para: %.2f", count)
 				transactionsApproved.Set(count)
 			case "denied":
+				log.Printf("[DEBUG] Setando 'transactions_denied_count' para: %.2f", count)
 				transactionsDenied.Set(count)
 			case "failed":
+				log.Printf("[DEBUG] Setando 'transactions_failed_count' para: %.2f", count)
 				transactionsFailed.Set(count)
 			case "reversed", "backend_reversed":
-				transactionsReversed.Add(count)
+				log.Printf("[DEBUG] Setando 'transactions_reversed_count' para: %.2f", count)
+				transactionsReversed.Set(count)
+			default:
+				log.Printf("[DEBUG] Status não tratado encontrado no CSV: '%s'", status)
 			}
-
-			if status != "approved" {
-				transactionsApproved.Set(0)
-			}
-			if status != "denied" {
-				transactionsDenied.Set(0)
-			}
-			if status != "failed" {
-				transactionsFailed.Set(0)
-			}
-			if !strings.Contains(status, "reversed") {
-				transactionsReversed.Set(0)
-			}
-
-			// Wait 1 second to simulate the passing of 1 minute in the log.
 
 			log.Printf("Update métric: %s = %.0f", status, count)
-			time.Sleep(1 * time.Second)
+			time.Sleep(3 * time.Second)
 
 		}
+		file.Close()
 	}
 
 }
