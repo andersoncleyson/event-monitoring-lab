@@ -15,25 +15,14 @@ import (
 )
 
 var (
-	transactionsApproved = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "transactions_approved_count",
-		Help: "Number of transactions approved in the last minute.",
-	})
-	transactionsDenied = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "transactions_denied_count",
-		Help: "Number of transactions declined in the last minute.",
-	})
-	transactionsFailed = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "transactions_failed_count",
-		Help: "Number of failed transactions in the last minute.",
-	})
-	transactionsReversed = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "transactions_reversed_count",
-		Help: "Number of transactions reversed in the last",
-	})
-)
+	transactionStats = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "transaction_stats_total",
+			Help: "Transaction statistics by status.",
+		},
+		[]string{"status"},
+	)
 
-var (
 	checkoutStats = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "checkout_stats_count",
@@ -44,16 +33,18 @@ var (
 )
 
 func init() {
-
-	prometheus.MustRegister(transactionsApproved)
-	prometheus.MustRegister(transactionsDenied)
-	prometheus.MustRegister(transactionsFailed)
-	prometheus.MustRegister(transactionsReversed)
+	prometheus.MustRegister(transactionStats)
 	prometheus.MustRegister(checkoutStats)
 }
 
 func processTransactionsCSV(filePath string) {
 	log.Println("Starting CSV data simulation...")
+
+	transactionStats.WithLabelValues("approved").Set(0)
+	transactionStats.WithLabelValues("denied").Set(0)
+	transactionStats.WithLabelValues("failed").Set(0)
+	transactionStats.WithLabelValues("reversed").Set(0)
+	transactionStats.WithLabelValues("refunded").Set(0)
 
 	// Infinite loop to play the data continuously
 	for {
@@ -78,30 +69,12 @@ func processTransactionsCSV(filePath string) {
 				continue
 			}
 
-			status := strings.ToLower(record[1])
+			status := strings.TrimSpace(strings.ToLower(record[1]))
 			count, _ := strconv.ParseFloat(record[2], 64)
 
-			log.Printf("[DEBUG] Line readed: status='%s', count=%.2f", status, count)
+			transactionStats.WithLabelValues(status).Set(count)
 
-			switch status {
-			case "approved":
-				log.Printf("[DEBUG] Setando 'transactions_approved_count' para: %.2f", count)
-				transactionsApproved.Set(count)
-			case "denied":
-				log.Printf("[DEBUG] Setando 'transactions_denied_count' para: %.2f", count)
-				transactionsDenied.Set(count)
-			case "failed":
-				log.Printf("[DEBUG] Setando 'transactions_failed_count' para: %.2f", count)
-				transactionsFailed.Set(count)
-			case "reversed", "backend_reversed":
-				log.Printf("[DEBUG] Setando 'transactions_reversed_count' para: %.2f", count)
-				transactionsReversed.Set(count)
-			default:
-				log.Printf("[DEBUG] Status não tratado encontrado no CSV: '%s'", status)
-			}
-
-			log.Printf("Update métric: %s = %.0f", status, count)
-			time.Sleep(3 * time.Second)
+			time.Sleep(10 * time.Millisecond)
 
 		}
 		file.Close()
