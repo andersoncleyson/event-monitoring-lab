@@ -109,7 +109,7 @@ By comparing the information from checkout_2.csv with this new view of transacti
 
 1. **The Drastic Drop in Checkouts at 15hrs**
 
-**Checkout Anomaly:** The first log (checkout_2.csv) showed zero checkouts at 3 PM.
+**Checkout Anomaly:** The first log (checkout_2.csv) showed zero checkouts at 15hrs.
 
 **Transaction Analysis:** The graph above shows that at 15hrs, there was a normal transaction volume, with 21,537 "approved" transactions and others within the expected range.
 
@@ -206,7 +206,7 @@ docker compose up --build -d
 
 **Example:**
 
-![Grafana dashboard](data-analysis\img\grafana-dashboard.png)
+![Grafana dashboard](data-analysis/img/grafana-dashboard.png)
 
 ## Troubleshooting
 
