@@ -160,7 +160,7 @@ Before you begin, ensure you have the following software installed:
 [Docker](https://docs.docker.com/get-started/get-docker/)
 [Docker Compose](https://docs.docker.com/compose/install/)
 
-**Como Executar**
+**How to run**
 
 1. **Clone the repository** and make sure your `transactions.csv` and `checkout_2.csv` files are in the `data/` folder.
 2. Open a terminal in the project root folder (`monitoring-stack/`).
